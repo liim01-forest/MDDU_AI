@@ -1,0 +1,9 @@
+streamlit>=1.40
+pandas>=2.2
+openpyxl>=3.1
+requests>=2.32
+beautifulsoup4>=4.12
+deep-translator>=1.11
+ollama>=0.4
+xlsxwriter>=3.2
+xlrd>=2.0
