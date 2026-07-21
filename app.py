@@ -933,6 +933,8 @@ def column_letter(index: int) -> str:
 
 def ensure_state() -> None:
     defaults = {
+        "main_menu": "국가별 인허가 정보",
+        "country_menu": "한국",
         "mfds_df": pd.DataFrame(columns=STANDARD_COLUMNS),
         "mfds_raw_rows": [],
         "mfds_active_tab": "item",
@@ -1685,6 +1687,27 @@ def main() -> None:
     st.title(APP_TITLE)
 
     with st.sidebar:
+        st.header("메뉴")
+        main_menu = st.radio(
+            "주 메뉴",
+            ["국가별 인허가 정보", "PMS", "통합 결과", "설정/로그"],
+            key="main_menu",
+            label_visibility="collapsed",
+        )
+
+        if main_menu == "국가별 인허가 정보":
+            with st.container(border=True):
+                country_menu = st.radio(
+                    "국가 선택",
+                    ["한국", "미국", "유럽"],
+                    key="country_menu",
+                    label_visibility="collapsed",
+                )
+            active_page = country_menu
+        else:
+            active_page = main_menu
+
+        st.divider()
         st.header("공통 검색 조건")
         keyword = st.text_input("제품명 / 키워드", placeholder="예: 혈압계, stent, software")
         manufacturer = st.text_input("제조사명", placeholder="예: Samsung, Medtronic")
@@ -1725,10 +1748,6 @@ def main() -> None:
         st.session_state.logs = []
         st.rerun()
 
-    tab_mfds, tab_fda, tab_eudamed, tab_pms, tab_integrated, tab_settings = st.tabs(
-        ["식약처", "FDA", "EUDAMED", "PMS", "통합 결과", "설정 / 로그"]
-    )
-
     mfds_df = st.session_state.mfds_df
     fda_df = st.session_state.fda_df
     eudamed_df = st.session_state.eudamed_df
@@ -1741,13 +1760,13 @@ def main() -> None:
 
     render_metric_row(mfds_df, fda_df, eudamed_df, integrated_df)
 
-    with tab_mfds:
+    if active_page == "한국":
         render_mfds_tab(filters.request_delay, filters.max_pages)
 
-    with tab_fda:
+    elif active_page == "미국":
         render_fda_tab(filters.keyword, filters.approval_no)
 
-    with tab_eudamed:
+    elif active_page == "유럽":
         st.subheader("EUDAMED 조회 결과")
         cols = st.columns(4)
         cols[0].text_input("Basic UDI-DI", key="eudamed_basic_udi")
@@ -1756,10 +1775,10 @@ def main() -> None:
         cols[3].text_input("Certificate No.", key="eudamed_certificate")
         render_table(eudamed_df, "eudamed_table")
 
-    with tab_pms:
+    elif active_page == "PMS":
         render_pms_tab()
 
-    with tab_integrated:
+    elif active_page == "통합 결과":
         st.subheader("통합 결과")
         cols = st.columns([1, 1, 1, 2])
         source_filter = cols[0].multiselect("기관", ["MFDS", "FDA", "EUDAMED"], default=["MFDS", "FDA", "EUDAMED"])
@@ -1786,7 +1805,7 @@ def main() -> None:
             use_container_width=True,
         )
 
-    with tab_settings:
+    elif active_page == "설정/로그":
         st.subheader("설정 / 로그")
         cols = st.columns(2)
         cols[0].metric("최대 페이지 수", filters.max_pages)
