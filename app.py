@@ -1821,7 +1821,16 @@ def main() -> None:
     logs_df = pd.DataFrame(st.session_state.logs, columns=["time", "source", "status", "count", "message"])
 
     if active_page == "한국":
-        render_mfds_tab(filters.request_delay, filters.max_pages)
+        mfds_search_tab, mfds_classification_tab = st.tabs(
+            ["품목 및 업체 검색", "의료기기 품목 분류표"]
+        )
+
+        with mfds_search_tab:
+            render_mfds_tab(filters.request_delay, filters.max_pages)
+
+        with mfds_classification_tab:
+            st.subheader("의료기기 품목 분류표")
+            st.info("의료기기 품목 분류표 기능이 표시될 영역입니다.")
 
     elif active_page == "미국":
         render_fda_tab(filters.keyword, filters.approval_no)
