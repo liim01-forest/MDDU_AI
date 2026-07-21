@@ -943,7 +943,11 @@ def ensure_state() -> None:
         "mfds_total": 0,
         "fda_df": pd.DataFrame(columns=STANDARD_COLUMNS),
         "fda_result_df": pd.DataFrame(columns=FDA_RESULT_COLUMNS),
+        "fda_510k_pma_result_df": pd.DataFrame(columns=FDA_RESULT_COLUMNS),
+        "fda_tplc_result_df": pd.DataFrame(columns=FDA_RESULT_COLUMNS),
         "fda_maude_df": pd.DataFrame(),
+        "fda_510k_pma_counts": {"510(k)": 0, "PMA": 0},
+        "fda_tplc_maude_counts": {"TPLC": 0, "MAUDE": 0},
         "fda_source_counts": {"510(k)": 0, "PMA": 0, "TPLC": 0, "MAUDE": 0},
         "eudamed_df": pd.DataFrame(columns=STANDARD_COLUMNS),
         "pms_output_name": "",
@@ -1556,100 +1560,188 @@ def render_mfds_tab(delay: float, max_pages: int | None) -> None:
         render_mfds_results("company")
 
 
-def render_fda_tab(default_product_name: str = "", default_approval_no: str = "") -> None:
-    st.subheader("FDA 인허가 정보 조회")
-    st.caption("FDA 510(k), PMA, TPLC, MAUDE 공개 DB를 기준으로 Product Code와 Device Name 중심의 표를 생성합니다.")
+def update_combined_fda_results() -> None:
+    frames = [
+        st.session_state.fda_510k_pma_result_df,
+        st.session_state.fda_tplc_result_df,
+    ]
+    nonempty_frames = [frame for frame in frames if not frame.empty]
+    combined = (
+        pd.concat(nonempty_frames, ignore_index=True).drop_duplicates().reset_index(drop=True)
+        if nonempty_frames
+        else pd.DataFrame(columns=FDA_RESULT_COLUMNS)
+    )
+    st.session_state.fda_result_df = combined
+    st.session_state.fda_df = fda_results_to_standard(combined)
+    st.session_state.fda_source_counts = {
+        **st.session_state.fda_510k_pma_counts,
+        **st.session_state.fda_tplc_maude_counts,
+    }
 
+
+def render_fda_result_table(df: pd.DataFrame, title: str, key: str, file_prefix: str) -> None:
+    st.markdown(f"#### {title}")
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        key=key,
+        column_config={
+            "원본 사이트 링크": st.column_config.LinkColumn("원본 사이트 링크"),
+        },
+    )
+    if not df.empty:
+        st.download_button(
+            f"{title} CSV 다운로드",
+            data=df.to_csv(index=False).encode("utf-8-sig"),
+            file_name=f"{file_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            use_container_width=True,
+            key=f"{key}_download",
+        )
+
+
+def render_fda_510k_pma_tab(default_product_name: str, default_approval_no: str) -> None:
     with st.expander("참고 FDA 사이트", expanded=False):
         st.markdown(
             f"""
             - [510(k) Premarket Notification]({FDA_510K_URL})
             - [PMA Premarket Approval]({FDA_PMA_URL})
+            """
+        )
+
+    with st.form("fda_510k_pma_search_form"):
+        source_cols = st.columns(2)
+        include_510k = source_cols[0].checkbox("510(k)", value=True, key="fda_510k_pma_include_510k")
+        include_pma = source_cols[1].checkbox("PMA", value=True, key="fda_510k_pma_include_pma")
+
+        query_cols = st.columns(4)
+        product_code = query_cols[0].text_input("Product Code", placeholder="예: DXN", key="fda_510k_pma_product_code")
+        device_name = query_cols[1].text_input("Device Name", value=default_product_name, placeholder="예: blood pressure", key="fda_510k_pma_device_name")
+        k_number = query_cols[2].text_input("510(k) Number", value=default_approval_no if default_approval_no.upper().startswith("K") else "", placeholder="예: K241234", key="fda_510k_pma_k_number")
+        pma_number = query_cols[3].text_input("PMA Number", value=default_approval_no if default_approval_no.upper().startswith("P") else "", placeholder="예: P840001", key="fda_510k_pma_pma_number")
+
+        option_cols = st.columns([1, 1, 4])
+        limit = option_cols[0].number_input("DB별 최대 건수", min_value=1, max_value=100, value=25, step=5, key="fda_510k_pma_limit")
+        run = option_cols[1].form_submit_button("510(k), PMA 조회", type="primary", use_container_width=True)
+
+    if run:
+        if not any([include_510k, include_pma]):
+            st.warning("510(k) 또는 PMA 중 하나 이상 선택하세요.")
+        elif not any([product_code.strip(), device_name.strip(), k_number.strip(), pma_number.strip()]):
+            st.warning("Product Code, Device Name, 510(k) Number, PMA Number 중 하나 이상 입력하세요.")
+        else:
+            try:
+                with st.spinner("FDA 510(k), PMA 공개 DB를 조회하는 중입니다..."):
+                    result_df, _, counts = search_fda_sources(
+                        include_510k, include_pma, False, False,
+                        product_code.strip(), device_name.strip(),
+                        k_number.strip(), pma_number.strip(), "", int(limit),
+                    )
+                st.session_state.fda_510k_pma_result_df = result_df
+                st.session_state.fda_510k_pma_counts = {
+                    "510(k)": counts.get("510(k)", 0),
+                    "PMA": counts.get("PMA", 0),
+                }
+                update_combined_fda_results()
+                add_log("FDA", "success", "510(k), PMA 조회 완료", len(result_df))
+                st.success(f"510(k), PMA 조회 완료: {len(result_df):,}건")
+            except Exception as exc:
+                add_log("FDA", "error", str(exc), 0)
+                st.error(str(exc))
+
+    counts = st.session_state.fda_510k_pma_counts
+    metric_cols = st.columns(2)
+    metric_cols[0].metric("510(k)", f"{counts.get('510(k)', 0):,}")
+    metric_cols[1].metric("PMA", f"{counts.get('PMA', 0):,}")
+    render_fda_result_table(
+        st.session_state.fda_510k_pma_result_df,
+        "510(k), PMA 결과",
+        "fda_510k_pma_result_table",
+        "fda_510k_pma_results",
+    )
+
+
+def render_fda_tplc_maude_tab() -> None:
+    with st.expander("참고 FDA 사이트", expanded=False):
+        st.markdown(
+            f"""
             - [TPLC Total Product Life Cycle]({FDA_TPLC_URL})
             - [MAUDE Text Search]({FDA_MAUDE_URL})
             """
         )
 
-    with st.form("fda_search_form"):
-        source_cols = st.columns(4)
-        include_510k = source_cols[0].checkbox("510(k)", value=True, key="fda_include_510k")
-        include_pma = source_cols[1].checkbox("PMA", value=True, key="fda_include_pma")
-        include_tplc = source_cols[2].checkbox("TPLC 보강", value=True, key="fda_include_tplc")
-        include_maude = source_cols[3].checkbox("MAUDE 참고", value=False, key="fda_include_maude")
+    with st.form("fda_tplc_maude_search_form"):
+        source_cols = st.columns(2)
+        include_tplc = source_cols[0].checkbox("TPLC", value=True, key="fda_tplc_maude_include_tplc")
+        include_maude = source_cols[1].checkbox("MAUDE", value=True, key="fda_tplc_maude_include_maude")
 
-        query_cols = st.columns(5)
-        product_code = query_cols[0].text_input("Product Code", placeholder="예: DXN", key="fda_product_code_query")
-        device_name = query_cols[1].text_input("Device Name", value=default_product_name, placeholder="예: blood pressure", key="fda_device_name_query")
-        k_number = query_cols[2].text_input("510(k) Number", value=default_approval_no if default_approval_no.upper().startswith("K") else "", placeholder="예: K241234", key="fda_k_number_query")
-        pma_number = query_cols[3].text_input("PMA Number", value=default_approval_no if default_approval_no.upper().startswith("P") else "", placeholder="예: P840001", key="fda_pma_number_query")
-        regulation_number = query_cols[4].text_input("Regulation No.", placeholder="예: 870.1130", key="fda_regulation_query")
+        query_cols = st.columns(3)
+        product_code = query_cols[0].text_input("Product Code", placeholder="예: DXN", key="fda_tplc_maude_product_code")
+        device_name = query_cols[1].text_input("Device Name", placeholder="예: blood pressure", key="fda_tplc_maude_device_name")
+        regulation_number = query_cols[2].text_input("Regulation No.", placeholder="예: 870.1130", key="fda_tplc_maude_regulation")
 
         option_cols = st.columns([1, 1, 4])
-        limit = option_cols[0].number_input("DB별 최대 건수", min_value=1, max_value=100, value=25, step=5, key="fda_limit")
-        run = option_cols[1].form_submit_button("FDA 조회 실행", type="primary", use_container_width=True)
+        limit = option_cols[0].number_input("DB별 최대 건수", min_value=1, max_value=100, value=25, step=5, key="fda_tplc_maude_limit")
+        run = option_cols[1].form_submit_button("TPLC, MAUDE 조회", type="primary", use_container_width=True)
 
     if run:
-        if not any([include_510k, include_pma, include_tplc, include_maude]):
-            st.warning("조회할 FDA 데이터 소스를 하나 이상 선택하세요.")
-        elif not any([product_code.strip(), device_name.strip(), k_number.strip(), pma_number.strip(), regulation_number.strip()]):
-            st.warning("Product Code, Device Name, 510(k) Number, PMA Number, Regulation No. 중 하나 이상 입력하세요.")
+        if not any([include_tplc, include_maude]):
+            st.warning("TPLC 또는 MAUDE 중 하나 이상 선택하세요.")
+        elif not any([product_code.strip(), device_name.strip(), regulation_number.strip()]):
+            st.warning("Product Code, Device Name, Regulation No. 중 하나 이상 입력하세요.")
+        elif include_tplc and not any([product_code.strip(), regulation_number.strip()]) and not include_maude:
+            st.warning("TPLC 조회에는 Product Code 또는 Regulation No.가 필요합니다.")
         else:
             try:
-                with st.spinner("FDA 공개 DB를 조회하는 중입니다..."):
-                    result_df, maude_df, counts = search_fda_sources(
-                        include_510k,
-                        include_pma,
-                        include_tplc,
-                        include_maude,
-                        product_code.strip(),
-                        device_name.strip(),
-                        k_number.strip(),
-                        pma_number.strip(),
-                        regulation_number.strip(),
-                        int(limit),
+                with st.spinner("FDA TPLC, MAUDE 공개 DB를 조회하는 중입니다..."):
+                    tplc_df, maude_df, counts = search_fda_sources(
+                        False, False, include_tplc, include_maude,
+                        product_code.strip(), device_name.strip(), "", "",
+                        regulation_number.strip(), int(limit),
                     )
-                st.session_state.fda_result_df = result_df
+                st.session_state.fda_tplc_result_df = tplc_df
                 st.session_state.fda_maude_df = maude_df
-                st.session_state.fda_source_counts = counts
-                st.session_state.fda_df = fda_results_to_standard(result_df)
-                add_log("FDA", "success", "FDA 공개 DB 조회 완료", len(result_df))
-                st.success(f"FDA 조회 완료: {len(result_df):,}건")
+                st.session_state.fda_tplc_maude_counts = {
+                    "TPLC": counts.get("TPLC", 0),
+                    "MAUDE": counts.get("MAUDE", 0),
+                }
+                update_combined_fda_results()
+                add_log("FDA", "success", "TPLC, MAUDE 조회 완료", len(tplc_df) + len(maude_df))
+                st.success(f"TPLC, MAUDE 조회 완료: {len(tplc_df) + len(maude_df):,}건")
             except Exception as exc:
                 add_log("FDA", "error", str(exc), 0)
                 st.error(str(exc))
 
-    counts = st.session_state.fda_source_counts
-    metric_cols = st.columns(4)
-    metric_cols[0].metric("510(k)", f"{counts.get('510(k)', 0):,}")
-    metric_cols[1].metric("PMA", f"{counts.get('PMA', 0):,}")
-    metric_cols[2].metric("TPLC/Class", f"{counts.get('TPLC', 0):,}")
-    metric_cols[3].metric("MAUDE", f"{counts.get('MAUDE', 0):,}")
+    counts = st.session_state.fda_tplc_maude_counts
+    metric_cols = st.columns(2)
+    metric_cols[0].metric("TPLC/Class", f"{counts.get('TPLC', 0):,}")
+    metric_cols[1].metric("MAUDE", f"{counts.get('MAUDE', 0):,}")
 
-    st.markdown("#### FDA 결과 표")
-    fda_result_df = st.session_state.fda_result_df
+    render_fda_result_table(
+        st.session_state.fda_tplc_result_df,
+        "TPLC 결과",
+        "fda_tplc_result_table",
+        "fda_tplc_results",
+    )
+    st.markdown("#### MAUDE 결과")
     st.dataframe(
-        fda_result_df,
+        st.session_state.fda_maude_df,
         use_container_width=True,
         hide_index=True,
-        key="fda_result_table",
-        column_config={
-            "원본 사이트 링크": st.column_config.LinkColumn("원본 사이트 링크"),
-        },
+        key="fda_maude_result_table",
     )
 
-    if not fda_result_df.empty:
-        st.download_button(
-            "FDA 결과 CSV 다운로드",
-            data=fda_result_df.to_csv(index=False).encode("utf-8-sig"),
-            file_name=f"fda_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
 
-    if include_maude or not st.session_state.fda_maude_df.empty:
-        st.markdown("#### MAUDE 참고 결과")
-        st.dataframe(st.session_state.fda_maude_df, use_container_width=True, hide_index=True, key="fda_maude_table")
+def render_fda_tab(default_product_name: str = "", default_approval_no: str = "") -> None:
+    st.subheader("FDA 인허가 정보 조회")
+    st.caption("FDA 공개 데이터베이스를 인허가 정보와 제품 생애주기/이상사례로 구분해 조회합니다.")
 
+    approval_tab, lifecycle_tab = st.tabs(["510(k), PMA", "TPLC, MAUDE"])
+    with approval_tab:
+        render_fda_510k_pma_tab(default_product_name, default_approval_no)
+    with lifecycle_tab:
+        render_fda_tplc_maude_tab()
 
 def pms_dependency_status() -> dict[str, bool]:
     return {
@@ -1932,7 +2024,11 @@ def main() -> None:
         st.session_state.mfds_total = 0
         st.session_state.fda_df = pd.DataFrame(columns=STANDARD_COLUMNS)
         st.session_state.fda_result_df = pd.DataFrame(columns=FDA_RESULT_COLUMNS)
+        st.session_state.fda_510k_pma_result_df = pd.DataFrame(columns=FDA_RESULT_COLUMNS)
+        st.session_state.fda_tplc_result_df = pd.DataFrame(columns=FDA_RESULT_COLUMNS)
         st.session_state.fda_maude_df = pd.DataFrame()
+        st.session_state.fda_510k_pma_counts = {"510(k)": 0, "PMA": 0}
+        st.session_state.fda_tplc_maude_counts = {"TPLC": 0, "MAUDE": 0}
         st.session_state.fda_source_counts = {"510(k)": 0, "PMA": 0, "TPLC": 0, "MAUDE": 0}
         st.session_state.eudamed_df = pd.DataFrame(columns=STANDARD_COLUMNS)
         st.session_state.pms_output_name = ""
