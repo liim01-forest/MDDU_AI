@@ -1688,14 +1688,15 @@ def main() -> None:
 
     with st.sidebar:
         st.header("메뉴")
-        main_menu = st.radio(
-            "주 메뉴",
-            ["국가별 인허가 정보", "PMS", "통합 결과", "설정/로그"],
-            key="main_menu",
-            label_visibility="collapsed",
-        )
+        if st.button(
+            "국가별 인허가 정보",
+            type="primary" if st.session_state.main_menu == "국가별 인허가 정보" else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.main_menu = "국가별 인허가 정보"
+            st.rerun()
 
-        if main_menu == "국가별 인허가 정보":
+        if st.session_state.main_menu == "국가별 인허가 정보":
             with st.container(border=True):
                 country_menu = st.radio(
                     "국가 선택",
@@ -1704,8 +1705,19 @@ def main() -> None:
                     label_visibility="collapsed",
                 )
             active_page = country_menu
-        else:
-            active_page = main_menu
+
+        for menu_name in ["PMS", "통합 결과", "설정/로그"]:
+            if st.button(
+                menu_name,
+                type="primary" if st.session_state.main_menu == menu_name else "secondary",
+                use_container_width=True,
+                key=f"main_menu_{menu_name}",
+            ):
+                st.session_state.main_menu = menu_name
+                st.rerun()
+
+        if st.session_state.main_menu != "국가별 인허가 정보":
+            active_page = st.session_state.main_menu
 
     keyword = ""
     manufacturer = ""
