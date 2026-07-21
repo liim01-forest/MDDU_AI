@@ -1693,6 +1693,8 @@ def main() -> None:
             width: auto;
             min-height: 2.25rem;
             padding: 0.35rem 0;
+            font-size: 1.5rem;
+            font-weight: 700;
             border: 0;
             border-radius: 0;
             background: transparent;
@@ -1716,7 +1718,13 @@ def main() -> None:
         section[data-testid="stSidebar"] [data-testid="stRadio"] label {
             width: auto;
             padding: 0.35rem 0;
+            font-size: 1.5rem;
+            font-weight: 700;
             border-bottom: 2px solid transparent;
+        }
+        section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+            font-size: inherit;
+            font-weight: inherit;
         }
         section[data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
             display: none;
