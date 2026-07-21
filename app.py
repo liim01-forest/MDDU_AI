@@ -988,6 +988,63 @@ def render_table(df: pd.DataFrame, key: str) -> None:
     )
 
 
+@st.cache_data
+def load_gmp_product_groups() -> pd.DataFrame:
+    csv_path = Path(__file__).with_name("gmp_product_groups.csv")
+    return pd.read_csv(csv_path, encoding="utf-8-sig")
+
+
+def render_gmp_product_groups() -> None:
+    st.subheader("GMP 품목군")
+    st.caption("의료기기 제조 및 품질관리 기준 [별표 3]의 GMP 품목군을 표로 정리한 내용입니다.")
+
+    gmp_df = load_gmp_product_groups()
+    group_options = (
+        gmp_df[["번호", "GMP 품목군"]]
+        .drop_duplicates()
+        .sort_values("번호")
+    )
+    group_labels = {
+        int(row["번호"]): f'{int(row["번호"])}. {row["GMP 품목군"]}'
+        for _, row in group_options.iterrows()
+    }
+
+    filter_col, search_col = st.columns([2, 3])
+    selected_group = filter_col.selectbox(
+        "품목군 선택",
+        [0, *group_labels.keys()],
+        format_func=lambda value: "전체 품목군" if value == 0 else group_labels[value],
+        key="gmp_group_filter",
+    )
+    search_text = search_col.text_input(
+        "표 검색",
+        placeholder="품목군, 분류코드 또는 품목명을 입력하세요.",
+        key="gmp_table_search",
+    ).strip()
+
+    view_df = gmp_df.copy()
+    if selected_group:
+        view_df = view_df[view_df["번호"] == selected_group]
+    if search_text:
+        match = view_df.astype(str).apply(
+            lambda column: column.str.contains(search_text, case=False, na=False)
+        ).any(axis=1)
+        view_df = view_df[match]
+
+    st.caption(f"총 {len(view_df):,}개 항목")
+    st.dataframe(
+        view_df,
+        use_container_width=True,
+        hide_index=True,
+        height=650,
+        column_config={
+            "번호": st.column_config.NumberColumn("번호", width="small", format="%d"),
+            "GMP 품목군": st.column_config.TextColumn("GMP 품목군", width="medium"),
+            "구분": st.column_config.TextColumn("구분", width="large"),
+        },
+        key="gmp_product_groups_table",
+    )
+
 def render_mfds_results(tab: str) -> None:
     rows = st.session_state.get("mfds_raw_rows", [])
     active_tab = st.session_state.get("mfds_active_tab", "item")
@@ -1829,8 +1886,14 @@ def main() -> None:
             render_mfds_tab(filters.request_delay, filters.max_pages)
 
         with mfds_classification_tab:
-            st.subheader("의료기기 품목 분류표")
-            st.info("의료기기 품목 분류표 기능이 표시될 영역입니다.")
+            gmp_group_tab, middle_class_tab = st.tabs(["GMP 품목군", "중분류별 품목"])
+
+            with gmp_group_tab:
+                render_gmp_product_groups()
+
+            with middle_class_tab:
+                st.subheader("중분류별 품목")
+                st.info("중분류별 품목 기능이 표시될 영역입니다.")
 
     elif active_page == "미국":
         render_fda_tab(filters.keyword, filters.approval_no)
