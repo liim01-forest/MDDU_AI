@@ -527,7 +527,9 @@ def fda_join_search(parts: list[str]) -> str:
     return " AND ".join(part for part in parts if part)
 
 
-def build_fda_510k_search(product_code: str, device_name: str, k_number: str) -> str:
+def build_fda_510k_search(
+    product_code: str, device_name: str, k_number: str, start_date: date, end_date: date
+) -> str:
     parts = []
     if product_code:
         parts.append(f"product_code:{fda_escape(product_code).upper()}")
@@ -535,10 +537,13 @@ def build_fda_510k_search(product_code: str, device_name: str, k_number: str) ->
         parts.append(f"k_number:{fda_escape(k_number).upper()}")
     if device_name:
         parts.append(f'device_name:"{fda_escape(device_name)}"')
+    parts.append(f"decision_date:[{start_date:%Y%m%d} TO {end_date:%Y%m%d}]")
     return fda_join_search(parts)
 
 
-def build_fda_pma_search(product_code: str, device_name: str, pma_number: str) -> str:
+def build_fda_pma_search(
+    product_code: str, device_name: str, pma_number: str, start_date: date, end_date: date
+) -> str:
     parts = []
     if product_code:
         parts.append(f"product_code:{fda_escape(product_code).upper()}")
@@ -547,6 +552,7 @@ def build_fda_pma_search(product_code: str, device_name: str, pma_number: str) -
     if device_name:
         text = fda_escape(device_name)
         parts.append(f'(trade_name:"{text}" OR generic_name:"{text}")')
+    parts.append(f"decision_date:[{start_date:%Y%m%d} TO {end_date:%Y%m%d}]")
     return fda_join_search(parts)
 
 
@@ -658,13 +664,15 @@ def search_fda_sources(
     k_number: str,
     pma_number: str,
     regulation_number: str,
-    limit: int,
+    start_date: date,
+    end_date: date,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, int]]:
+    limit = 100
     raw_rows: list[tuple[str, dict[str, Any]]] = []
     source_counts = {"510(k)": 0, "PMA": 0, "TPLC": 0, "MAUDE": 0}
 
     if include_510k:
-        search = build_fda_510k_search(product_code, device_name, k_number)
+        search = build_fda_510k_search(product_code, device_name, k_number, start_date, end_date)
         params = {"limit": limit, "sort": "decision_date:desc"}
         if search:
             params["search"] = search
@@ -674,7 +682,7 @@ def search_fda_sources(
         source_counts["510(k)"] = len(payload.get("results", []))
 
     if include_pma:
-        search = build_fda_pma_search(product_code, device_name, pma_number)
+        search = build_fda_pma_search(product_code, device_name, pma_number, start_date, end_date)
         params = {"limit": limit, "sort": "decision_date:desc"}
         if search:
             params["search"] = search
@@ -699,12 +707,13 @@ def search_fda_sources(
             result_rows.append(fda_result_row(classification, "TPLC", classification))
 
     maude_df = pd.DataFrame()
-    if include_maude and (product_code or device_name):
+    if include_maude:
         maude_parts = []
         if product_code:
             maude_parts.append(f"device.device_report_product_code:{fda_escape(product_code).upper()}")
         if device_name:
             maude_parts.append(f'device.brand_name:"{fda_escape(device_name)}"')
+        maude_parts.append(f"date_received:[{start_date:%Y%m%d} TO {end_date:%Y%m%d}]")
         maude_search = fda_join_search(maude_parts)
         params = {"limit": min(limit, 25)}
         if maude_search:
@@ -1621,22 +1630,31 @@ def render_fda_510k_pma_tab(default_product_name: str, default_approval_no: str)
         k_number = query_cols[2].text_input("510(k) Number", value=default_approval_no if default_approval_no.upper().startswith("K") else "", placeholder="예: K241234", key="fda_510k_pma_k_number")
         pma_number = query_cols[3].text_input("PMA Number", value=default_approval_no if default_approval_no.upper().startswith("P") else "", placeholder="예: P840001", key="fda_510k_pma_pma_number")
 
-        option_cols = st.columns([1, 1, 4])
-        limit = option_cols[0].number_input("DB별 최대 건수", min_value=1, max_value=100, value=25, step=5, key="fda_510k_pma_limit")
-        run = option_cols[1].form_submit_button("510(k), PMA 조회", type="primary", use_container_width=True)
+        date_cols = st.columns([1, 1, 1, 3])
+        start_date = date_cols[0].date_input(
+            "Decision Date 시작일",
+            value=date(date.today().year, 1, 1),
+            key="fda_510k_pma_start_date",
+        )
+        end_date = date_cols[1].date_input(
+            "Decision Date 종료일",
+            value=date.today(),
+            key="fda_510k_pma_end_date",
+        )
+        run = date_cols[2].form_submit_button("510(k), PMA 조회", type="primary", use_container_width=True)
 
     if run:
-        if not any([include_510k, include_pma]):
+        if start_date > end_date:
+            st.warning("시작일은 종료일보다 늦을 수 없습니다.")
+        elif not any([include_510k, include_pma]):
             st.warning("510(k) 또는 PMA 중 하나 이상 선택하세요.")
-        elif not any([product_code.strip(), device_name.strip(), k_number.strip(), pma_number.strip()]):
-            st.warning("Product Code, Device Name, 510(k) Number, PMA Number 중 하나 이상 입력하세요.")
         else:
             try:
                 with st.spinner("FDA 510(k), PMA 공개 DB를 조회하는 중입니다..."):
                     result_df, _, counts = search_fda_sources(
                         include_510k, include_pma, False, False,
                         product_code.strip(), device_name.strip(),
-                        k_number.strip(), pma_number.strip(), "", int(limit),
+                        k_number.strip(), pma_number.strip(), "", start_date, end_date,
                     )
                 st.session_state.fda_510k_pma_result_df = result_df
                 st.session_state.fda_510k_pma_counts = {
@@ -1681,15 +1699,25 @@ def render_fda_tplc_maude_tab() -> None:
         device_name = query_cols[1].text_input("Device Name", placeholder="예: blood pressure", key="fda_tplc_maude_device_name")
         regulation_number = query_cols[2].text_input("Regulation No.", placeholder="예: 870.1130", key="fda_tplc_maude_regulation")
 
-        option_cols = st.columns([1, 1, 4])
-        limit = option_cols[0].number_input("DB별 최대 건수", min_value=1, max_value=100, value=25, step=5, key="fda_tplc_maude_limit")
-        run = option_cols[1].form_submit_button("TPLC, MAUDE 조회", type="primary", use_container_width=True)
+        st.caption("날짜 범위는 MAUDE의 Date Report Received에 적용되며, TPLC 분류 조회에는 적용되지 않습니다.")
+        date_cols = st.columns([1, 1, 1, 3])
+        start_date = date_cols[0].date_input(
+            "Date Report Received 시작일",
+            value=date(date.today().year, 1, 1),
+            key="fda_tplc_maude_start_date",
+        )
+        end_date = date_cols[1].date_input(
+            "Date Report Received 종료일",
+            value=date.today(),
+            key="fda_tplc_maude_end_date",
+        )
+        run = date_cols[2].form_submit_button("TPLC, MAUDE 조회", type="primary", use_container_width=True)
 
     if run:
-        if not any([include_tplc, include_maude]):
+        if start_date > end_date:
+            st.warning("시작일은 종료일보다 늦을 수 없습니다.")
+        elif not any([include_tplc, include_maude]):
             st.warning("TPLC 또는 MAUDE 중 하나 이상 선택하세요.")
-        elif not any([product_code.strip(), device_name.strip(), regulation_number.strip()]):
-            st.warning("Product Code, Device Name, Regulation No. 중 하나 이상 입력하세요.")
         elif include_tplc and not any([product_code.strip(), regulation_number.strip()]) and not include_maude:
             st.warning("TPLC 조회에는 Product Code 또는 Regulation No.가 필요합니다.")
         else:
@@ -1698,7 +1726,7 @@ def render_fda_tplc_maude_tab() -> None:
                     tplc_df, maude_df, counts = search_fda_sources(
                         False, False, include_tplc, include_maude,
                         product_code.strip(), device_name.strip(), "", "",
-                        regulation_number.strip(), int(limit),
+                        regulation_number.strip(), start_date, end_date,
                     )
                 st.session_state.fda_tplc_result_df = tplc_df
                 st.session_state.fda_maude_df = maude_df
