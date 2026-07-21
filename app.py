@@ -1707,16 +1707,13 @@ def main() -> None:
         else:
             active_page = main_menu
 
-        st.divider()
-        st.header("공통 검색 조건")
-        keyword = st.text_input("제품명 / 키워드", placeholder="예: 혈압계, stent, software")
-        manufacturer = st.text_input("제조사명", placeholder="예: Samsung, Medtronic")
-        approval_no = st.text_input("허가번호 / Submission No. / UDI", placeholder="예: K241234")
-        date_range = st.date_input("조회 기간", value=())
-
-        max_pages = 3
-        request_delay = 0.5
-        clear = st.button("결과 초기화", use_container_width=True)
+    keyword = ""
+    manufacturer = ""
+    approval_no = ""
+    date_range = ()
+    max_pages = 3
+    request_delay = 0.5
+    clear = False
 
     start_date = date_range[0] if isinstance(date_range, tuple) and len(date_range) > 0 else None
     end_date = date_range[1] if isinstance(date_range, tuple) and len(date_range) > 1 else None
@@ -1757,8 +1754,6 @@ def main() -> None:
         .reset_index(drop=True)
     )
     logs_df = pd.DataFrame(st.session_state.logs, columns=["time", "source", "status", "count", "message"])
-
-    render_metric_row(mfds_df, fda_df, eudamed_df, integrated_df)
 
     if active_page == "한국":
         render_mfds_tab(filters.request_delay, filters.max_pages)
