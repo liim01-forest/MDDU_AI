@@ -994,6 +994,91 @@ def load_gmp_product_groups() -> pd.DataFrame:
     return pd.read_csv(csv_path, encoding="utf-8-sig")
 
 
+def render_gmp_grouped_table(df: pd.DataFrame) -> None:
+    if df.empty:
+        st.info("검색 조건에 해당하는 품목이 없습니다.")
+        return
+
+    body_rows: list[str] = []
+    for (number, group_name), group_df in df.groupby(
+        ["번호", "GMP 품목군"], sort=False, dropna=False
+    ):
+        rowspan = len(group_df)
+        group_text = str(group_name)
+        if " (" in group_text:
+            korean_name, english_name = group_text.split(" (", 1)
+            group_html = f"{escape(korean_name)}<br><span>({escape(english_name)}</span>"
+        else:
+            group_html = escape(group_text)
+
+        for row_index, (_, row) in enumerate(group_df.iterrows()):
+            merged_cells = ""
+            if row_index == 0:
+                merged_cells = (
+                    f'<td class="gmp-number" rowspan="{rowspan}">{int(number)}</td>'
+                    f'<td class="gmp-group" rowspan="{rowspan}">{group_html}</td>'
+                )
+            body_rows.append(
+                f'<tr>{merged_cells}<td class="gmp-classification">'
+                f'{escape(str(row["구분"]))}</td></tr>'
+            )
+
+    table_html = f"""
+    <div class="gmp-table-wrap">
+      <table class="gmp-grouped-table">
+        <thead>
+          <tr>
+            <th class="gmp-number">번호</th>
+            <th class="gmp-group">품목군<br><span>(Product Group)</span></th>
+            <th class="gmp-classification">구분</th>
+          </tr>
+        </thead>
+        <tbody>{''.join(body_rows)}</tbody>
+      </table>
+    </div>
+    <style>
+      .gmp-table-wrap {{
+        max-height: 650px;
+        overflow: auto;
+        border: 1px solid #222;
+      }}
+      .gmp-grouped-table {{
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        color: #111;
+        background: #fff;
+      }}
+      .gmp-grouped-table th,
+      .gmp-grouped-table td {{
+        border-right: 1px solid #222;
+        border-bottom: 1px solid #222;
+        padding: 0.45rem 0.55rem;
+        line-height: 1.35;
+      }}
+      .gmp-grouped-table th {{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f7f7f7;
+        text-align: center;
+        font-weight: 600;
+      }}
+      .gmp-grouped-table .gmp-number {{ width: 7%; text-align: center; }}
+      .gmp-grouped-table .gmp-group {{
+        width: 28%;
+        text-align: center;
+        vertical-align: middle;
+      }}
+      .gmp-grouped-table .gmp-classification {{ width: 65%; }}
+      .gmp-grouped-table td.gmp-number {{ vertical-align: middle; }}
+      .gmp-grouped-table tr:last-child td {{ border-bottom: 0; }}
+      .gmp-grouped-table th:last-child,
+      .gmp-grouped-table td:last-child {{ border-right: 0; }}
+    </style>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+
 def render_gmp_product_groups() -> None:
     st.subheader("GMP 품목군")
     st.caption("의료기기 제조 및 품질관리 기준 [별표 3]의 GMP 품목군을 표로 정리한 내용입니다.")
@@ -1032,18 +1117,7 @@ def render_gmp_product_groups() -> None:
         view_df = view_df[match]
 
     st.caption(f"총 {len(view_df):,}개 항목")
-    st.dataframe(
-        view_df,
-        use_container_width=True,
-        hide_index=True,
-        height=650,
-        column_config={
-            "번호": st.column_config.NumberColumn("번호", width="small", format="%d"),
-            "GMP 품목군": st.column_config.TextColumn("GMP 품목군", width="medium"),
-            "구분": st.column_config.TextColumn("구분", width="large"),
-        },
-        key="gmp_product_groups_table",
-    )
+    render_gmp_grouped_table(view_df)
 
 def render_mfds_results(tab: str) -> None:
     rows = st.session_state.get("mfds_raw_rows", [])
