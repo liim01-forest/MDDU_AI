@@ -1,0 +1,153 @@
+﻿번호,GMP 품목군,구분
+1,진료용 일반장비 (General Equipment for Medical Treatment),A01000 진료대와 수술대 Operating and treatment table
+1,진료용 일반장비 (General Equipment for Medical Treatment),A02000 의료용 침대 Bed for medical use
+1,진료용 일반장비 (General Equipment for Medical Treatment),A03000 의료용조명기 Medical light and lamps
+1,진료용 일반장비 (General Equipment for Medical Treatment),A68000 치과용 진료 장치 및 의자 Dental unit and chair
+1,진료용 일반장비 (General Equipment for Medical Treatment),"A88000 이비인후과용 진료장치 및 의자 Treatment table for Ear, Nose and Throat"
+1,진료용 일반장비 (General Equipment for Medical Treatment),A89000 안과용 진료 장치 및 의자 Ophthalmic instrument table and chair
+1,진료용 일반장비 (General Equipment for Medical Treatment),A04000 의료용 소독기 Medical sterilizing apparatus
+1,진료용 일반장비 (General Equipment for Medical Treatment),A05000 의료용 무균수 장치 Medical water sterilizers
+2,수술용 장치 (Surgical Operation System),A06000 마취기 Anesthesia apparatus
+2,수술용 장치 (Surgical Operation System),A39000 의료용 흡인기 Aspirators for medical use
+2,수술용 장치 (Surgical Operation System),A35000 전기 및 기타 수술장치 Electrosugical and other surgical devices
+2,수술용 장치 (Surgical Operation System),A36000 냉동 수술장치 Cryosurgery device
+2,수술용 장치 (Surgical Operation System),A40000 기흉기 및 기복기 Pneumothorax and Pnemoperitoneum apparatus
+3,레이저수술용 장치 (Laser surgical devices),A37000 레이저 진료기 Laser apparatus for medical use
+3,레이저수술용 장치 (Laser surgical devices),A15500 레이저 장해 방어용 기구 Laser protective device
+4,의료용 챔버 (Chamber for Medical Purpose),A08000 의료용 챔버 Medical chamber
+4,의료용 챔버 (Chamber for Medical Purpose),A34000 의료용 정온기 Thermostats for medical use
+5,생명유지 장치 (Life Support System),A07000 호흡보조기 Respiratory apparatus
+5,생명유지 장치 (Life Support System),A10000 보육기 Neonatal incubator
+6,내장기능 대용기(I) (Device for Replacing Function of Internal Organ(I)),A09000 내장기능 대용기 Artificial internal organ apparatus
+7,내장기능 대용기(II) (Device for Replacing Function of Internal Organ(II)),"A09000 내장기능 대용기(3,4등급) Artificial internal organ apparatus(3,4 class)"
+8,진단용 장치(I) (Diagnostic Imaging System(I)),A11000 진단용 엑스선 장치 Diagnostic X-ray system
+8,진단용 장치(I) (Diagnostic Imaging System(I)),A12000 비전리 진단장치 Non-ionization diagnostic device
+8,진단용 장치(I) (Diagnostic Imaging System(I)),A13000 방사선 진료장치 Radiolgic device
+9,진단용 장치(II) (Diagnostic Imaging System(II)),A14000 의료용 필름 현상기 Film developer for medical use
+9,진단용 장치(II) (Diagnostic Imaging System(II)),A87000 의료용 필름 판독장치 Film viewing devices for medical use
+9,진단용 장치(II) (Diagnostic Imaging System(II)),B01000 방사선용품 Radiographic supplies
+9,진단용 장치(II) (Diagnostic Imaging System(II)),A15000 방사선 장해 방어용 기구 Radiation protective device
+10,이학 진료용 기구(I) (Physical devices for medical use(I)),A16000 이학 진료용 기구 Physical devices for medical use
+11,이학 진료용 기구(II) (Physical devices for medical use(II)),"A16000 이학 진료용 기구(3,4 등급) Physical devices for medical use(3,4 class)"
+12,"의료용 자극발생 기계기구 (Machine or Instrument for Generating Electric Stimulation, Medical Use)",A83000 개인용전기자극기 Electric stimulator for medical use by persona
+12,"의료용 자극발생 기계기구 (Machine or Instrument for Generating Electric Stimulation, Medical Use)",A85000 의료용 자기 발생기 Magnetic induction apparatus for medical use
+12,"의료용 자극발생 기계기구 (Machine or Instrument for Generating Electric Stimulation, Medical Use)",A67000 정형 및 기능 회복용 기구 Medical device for orthopedics and restoration
+12,"의료용 자극발생 기계기구 (Machine or Instrument for Generating Electric Stimulation, Medical Use)",A82000 의료용 진동기 Vibrators
+13,심혈관용 기계 기구(I) (Cardiovascularde vices(I)),A17000 심혈관용 기계 기구 Cardiovascular devices
+14,심혈관용 기계 기구(II) (Cardiovascularde vices(II)),"A17000 심혈관용 기계 기구(3,4등급) Cardiovascular devices(3,4 class)"
+15,비뇨기과용 기계 기구(I) (Urology devices(I)),A18000 비뇨기과용 기계 기구 Urology devices
+16,비뇨기과용 기계 기구(II) (Urology devices(II)),"A18000 비뇨기과용 기계 기구(3,4등급) Urology devices(3,4 class)"
+17,조직처리기구 (Tissue processing device),A33000 조직 가공기 Tissue processing device
+17,조직처리기구 (Tissue processing device),A91000 의료용 세포 및 조직 처리 기구 Medical cell and tissue processing device
+18,결찰기 및 봉합기(I) (Instruments for ligature and suture(I)),A38000 결찰기 및 봉합기 Instruments for ligature and suture
+19,결찰기 및 봉합기(II) (Instruments for ligature and suture(II)),"A38000 결찰기 및 봉합기(3,4등급) Instruments for ligature and suture(3,4 class)"
+20,환자 운반차 (PatientTransport Vehicle),A19000 환자 운반차 Patient transport
+21,의료용 소식자(I) (Probe and Sound for medical use(I)),A58000 의료용 소식자 Medical informant
+22,의료용 소식자(II) (Probe and Sound for medical use(II)),"A58000 의료용 소식자(3,4등급) Medical informant(3,4 class)"
+23,생체현상 측정기기(I) (Physiologica lMonitoring Device(I)),A20000 청진기 Stethoscope
+23,생체현상 측정기기(I) (Physiologica lMonitoring Device(I)),A21000 체온 측정용 기구 Clinical thermometric system
+23,생체현상 측정기기(I) (Physiologica lMonitoring Device(I)),A28000 검안용 기기 Eye testing instruments
+23,생체현상 측정기기(I) (Physiologica lMonitoring Device(I)),A29000 청력 검사용 기기 Hearing testing instruments
+23,생체현상 측정기기(I) (Physiologica lMonitoring Device(I)),B06000 시력표 및 색각검사표 (1등급) Test chart for visual acuity and color blindness(1 class)
+24,생체현상 측정기기(II) (Physiological Monitoring Device(II)),A23000 혈압검사 또는 맥파검사용 기기 Sphygmomanometers and sphygmographs
+24,생체현상 측정기기(II) (Physiological Monitoring Device(II)),A25000 체액 분석기기 (1등급) Body fluid testing apparatus(1 class)
+24,생체현상 측정기기(II) (Physiological Monitoring Device(II)),A26000 내장기능 검사용 기기 Visceral function testing instruments
+24,생체현상 측정기기(II) (Physiological Monitoring Device(II)),A30000 지각 및 신체진단용 기구 Perception and organs diagnostic devices
+24,생체현상 측정기기(II) (Physiological Monitoring Device(II)),A27000 호흡기능 검사용 기기 Respiratory function testing apparatus
+25,측정 및 유도용 기구(I) (Measuring and introducing instrument(I)),A64000 측정 및 유도용 기구 Measuring and introducing instrument
+26,측정 및 유도용 기구(II) (Measuring and introducing instrument(II)),A64000 측정 및 유도용 기구(4등급) Measuring and introducing instrument(4 class)
+27,의료용 경(I) (Medical Speculum(I)),A31000 의료용 경 Speculums for medical use
+28,의료용 경(II) (Medical Speculum(II)),A31000 의료용 경(4등급) Speculums for medical use(4 class)
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A41000 의료용 칼 Knives for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A42000 의료용 가위 Scissors for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A43000 의료용 큐렛 Curettes for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A44000 의료용 클램프 Clamp for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A45000 의료용 겸자 Forceps for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A46000 의료용 톱 Saw for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A47000 의료용 끌 Chisel for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A48000 의료용 박리자 Raspatories for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A49000 의료용 망치 Mallet for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A80000 헤르니아 치료용 기구 Hernia supporters
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A62000 의료용 충전기 Filling instruments for medical use
+29,의료처치용 기계기구(I) (Machine or Instrument for Medical Treatment(I)),A63000 의료용 누르개 Depressors for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A50000 의료용 줄 File for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A51000 의료용 레버 Lever for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A52000 의료용 올가미 Snare for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),"A55000 의료용 천자기, 천착기 및 천공기 Puncturing, abrasion, perforating instrument for medical use"
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A56000 개창 또는 개공용 기구 Wound retractors and speculums
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A59000 의료용 확장기 Dilator and expander for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A60000 의료용 도포기 Applicator for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A61000 혼합 및 분배용 기구 Dispenser and Mixing instrument
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A65000 의료용 세정기 Douche instruments for medical use
+30,의료처치용 기계기구(II) (Machine or Instrument for Medical Treatmen(II)),A81000 의료용 흡입기 Inhalators for medical use
+31,주사기 및 주사침류 (Syringe or Needle),A53000 주사침 및 천자침 Needle for syringe and puncture
+31,주사기 및 주사침류 (Syringe or Needle),A54000 주사기 Syringes
+31,주사기 및 주사침류 (Syringe or Needle),A84000 침 또는 구용기구 Acupuncture and moxibustion apparatus
+32,의료용 취관 및 체액 유도관(I) (Tube and Catheter for medical use(I)),A57000 의료용 취관 및 체액 유도관 Tube and Catheter for medical use
+33,의료용 취관 및 체액 유도관(II) (Tube and Catheter for medical use(II)),"A57000 의료용 취관 및 체액 유도관(3,4등급) Tube and Catheter for medical use(3,4 class)"
+34,채혈 또는 수혈 및 생체 검사용 기구(I) (Blood donor or transfusion and biopsy set(I)),A66000 채혈 또는 수혈 및 생체 검사용 기구 Blood donor or transfusion and biopsy set
+35,채혈 또는 수혈 및 생체 검사용 기구(II) (Blood donor or transfusion and biopsy set(II)),"A66000 채혈 또는 수혈 및 생체 검사용 기구(3,4등급) Blood donor or transfusion and biopsy set(3,4 class)"
+36,의약품 주입기(I) (Infusion instruments(I)),A79000 의약품 주입기 Infusion instruments
+37,의약품 주입기(II) (Infusion instruments(II)),"A79000 의약품 주입기(3,4등급) Infusion instruments(3,4 class)"
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A69000 치과용 엔진 Dental engine
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A70000 치과용 브로치 Broaches for dental use
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A71000 치과용 탐침 Explorers for dental use
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A72000 치과용 방습기 Moisture-excluding instruments for dental use
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A73000 인상 채득 또는 교합용 기구 Impression taking and articulating instruments
+38,치과처치용 기계 기구 (Machine or Device for Dental Treatment),A74000 치과용 중합기 Vulcanizers and curing units for dental use
+39,시력보정용 안경 (Sight corrective spectacles),A76000 시력보정용 안경 Sight corrective spectacles
+40,눈 적용 렌즈(I) (Ophthalmic lens(I)),A77000 눈 적용 렌즈 Ophthalmic lens
+41,눈 적용 렌즈(II) (Ophthalmic lens(II)),"A77000 눈 적용 렌즈(3,4등급) Ophthalmic lens(3,4 class)"
+42,보청기 (Hearing Aid),A78000 보청기 Hearing Aid
+43,의료용 물질 생성기 (EquipmentGenera tingMedicalSubsta nce),A86000 의료용 물질 생성기 Medicinal substance-producing equipment
+44,봉합사 및 결찰사(I) (Suture and ligature),B02000 봉합사 및 결찰사 Suture and ligature
+45,봉합사 및 결찰사(II) (Suture and ligature),"B02000 봉합사 및 결찰사(3,4등급) Suture and ligature(3,4 class)"
+46,정형용품I(관절류 등) (Orthopedic materials(Internal total etc)),"B03000 정형용품, B03410.01(정형용품II(재료) 제외) Orthopedic materials(except for Orthopedic materials II)"
+47,정형용품II(재료) (Orthopedic materials),"B03190, B03240, B03260, B03280~B03400"
+48,체내삽입용 치과용품 (Interbody Implants for Medical Purpose),C18000 악안면 성형용 재료 Maxillofacial Plastic Material
+48,체내삽입용 치과용품 (Interbody Implants for Medical Purpose),C19000 악골 치아 고정장치 Maxillary Bone Fixation Material
+48,체내삽입용 치과용품 (Interbody Implants for Medical Purpose),"C21000 치과 임플란트 시술기구 implant, endosseous, hand instrument"
+49,치과용 임플란트 시스템(I) (Dental Implant System(I)),C20000 치과용 임플란트 시스템 Dental Implant System
+50,치과용 임플란트 시스템(II) (Dental Implant System(II)),"C20000 치과용 임플란트 시스템(3,4등급) Dental Implant System(3,4 class)"
+51,인체조직 또는 기능 대치품 (Substitute of Human Tissue or Body Function),B04000 인체조직 또는 기능 대치품 Human tissue and organ substitute
+52,치과용 골이식재 (Dental Bone Graft Material),C22000 치과용 골이식재 Dental Bone Graft Material
+53,치주 조직재생 유도재 (Guided Bone and Tissue Regeneration Material),C23000 치주 조직재생 유도재 Guided Bone and Tissue Regeneration Material
+54,부목 (Splints),B05000 부목 Splints
+55,외과용품 (Surgical supplies),B07000 외과용품(창상피복재 제외) Surgical supplies
+56,창상피복재 (Dressing),B07070 창상피복재 Dressing
+57,콘돔 (Condom),B08000 콘돔 Condom
+58,피임용구 (Contraceptive device),B09000 피임용구 Contraceptive device
+59,치과용 합금 ((Dental Alloy),C01000 치과 가공용 합금 Dental Processing Alloy
+59,치과용 합금 ((Dental Alloy),C02000 치과 주조용 합금 Dental Casting alloy
+59,치과용 합금 ((Dental Alloy),C03000 메탈 세라믹 합금 Metal-Ceramic Alloy
+59,치과용 합금 ((Dental Alloy),C04000 납착용 합금 Soldering Alloy
+59,치과용 합금 ((Dental Alloy),C05000 가공용 합금 Fabricated Alloy
+60,치과처치용 재료 (Other Materials for Dental Treatment),C06000 직접 수복재료 Direct Restorative Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C07000 심미 보철재료 Esthetic Prosthetic Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C08000 의치재료 Denture Making Material/Denture Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C09000 의치상재료 denture material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C11000 치과접착용시멘트 Dental Adhesive Cement
+60,치과처치용 재료 (Other Materials for Dental Treatment),C12000 치과용 접착제 Dental Bonding Agent
+60,치과처치용 재료 (Other Materials for Dental Treatment),C10000 근관 치료재료 Material For Root Canal Therapy
+60,치과처치용 재료 (Other Materials for Dental Treatment),C13000 치과용 인상재료 Dental Impression Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C14000 치과용 왁스 Dental Wax
+60,치과처치용 재료 (Other Materials for Dental Treatment),C16000 예방 치과재료 Preventive Dental Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C17000 치과 교정재료 Orthodontic Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C24000 치과용 진단제 dental diagnosis Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C25000 보철물 분리재료 Prosthetic Adhesive Remover
+60,치과처치용 재료 (Other Materials for Dental Treatment),C26000 기타 보철재료 Other Prosthetic Material
+60,치과처치용 재료 (Other Materials for Dental Treatment),C27000 기타 보존재료 Other Restorative-Endodontic Material
+61,유헬스케어 의료기기(I) (Medical Device for Ubiquitous Healthcare(I)),A90000 유헬스케어 의료기기 Medical Device for Ubiquitous Healthcare
+62,유헬스케어 의료기기(II) (Medical Device for Ubiquitous Healthcare(II)),"A90000 유헬스케어 의료기기(3,4등급) Medical Device for Ubiquitous Healthcare"
+63,혁신의료기기소프 트웨어,「의료기기산업법」제24조(혁신의료기기소프트웨어 특례) 적용 의료기기
+64,소프트웨어 (Software),E01000 심혈관 진료용 소프트웨어 Software for cardiovascular
+64,소프트웨어 (Software),E02000 치의학 진료용 소프트웨어 Software for dental
+64,소프트웨어 (Software),E03000 이비인후과학 진료용 소프트웨어 Software for otolaryngology
+64,소프트웨어 (Software),E04000 위장병학 및 비뇨의학 진료용 소프트웨어 Software for gastroenterology and urology
+64,소프트웨어 (Software),E05000 병원진료용 소프트웨어 Software for general hospital
+64,소프트웨어 (Software),E06000 신경과학 진료용 소프트웨어 Software for neurology
+64,소프트웨어 (Software),E07000 산부인과학 진료용 소프트웨어 Software for uterology
+64,소프트웨어 (Software),E08000 안과학 진료용 소프트웨어 Software for ophthalmology
+64,소프트웨어 (Software),E09000 정형외과학 진료용 소프트웨어 Software for orthopaedics
+64,소프트웨어 (Software),E10000 재활의학 진료용 소프트웨어 Software for rehabilitation
+64,소프트웨어 (Software),E11000 방사선종양학 및 영상의학 진료용 소프트웨어 Software for radiation oncology and diagnostic radiology
