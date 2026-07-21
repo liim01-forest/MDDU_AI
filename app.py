@@ -1686,22 +1686,67 @@ def main() -> None:
 
     st.title(APP_TITLE)
 
+    st.markdown(
+        """
+        <style>
+        section[data-testid="stSidebar"] [data-testid="stButton"] button {
+            width: auto;
+            min-height: 2.25rem;
+            padding: 0.35rem 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            color: #262730;
+            justify-content: flex-start;
+        }
+        section[data-testid="stSidebar"] [data-testid="stButton"] button:hover {
+            color: #ff4b4b;
+            background: transparent;
+        }
+        section[data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"],
+        section[data-testid="stSidebar"] [data-testid="stButton"] button[data-testid="stBaseButton-primary"] {
+            color: #ff4b4b;
+            border-bottom: 2px solid #ff4b4b;
+        }
+        section[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] {
+            flex-direction: row;
+            gap: 1rem;
+        }
+        section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+            width: auto;
+            padding: 0.35rem 0;
+            border-bottom: 2px solid transparent;
+        }
+        section[data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
+            display: none;
+        }
+        section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+            color: #ff4b4b;
+            border-bottom-color: #ff4b4b;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     with st.sidebar:
         st.header("메뉴")
         if st.button(
             "국가별 인허가 정보",
             type="primary" if st.session_state.main_menu == "국가별 인허가 정보" else "secondary",
-            use_container_width=True,
+            use_container_width=False,
         ):
             st.session_state.main_menu = "국가별 인허가 정보"
             st.rerun()
 
         if st.session_state.main_menu == "국가별 인허가 정보":
-            with st.container(border=True):
+            with st.container():
                 country_menu = st.radio(
                     "국가 선택",
                     ["한국", "미국", "유럽"],
                     key="country_menu",
+                    horizontal=True,
                     label_visibility="collapsed",
                 )
             active_page = country_menu
@@ -1710,7 +1755,7 @@ def main() -> None:
             if st.button(
                 menu_name,
                 type="primary" if st.session_state.main_menu == menu_name else "secondary",
-                use_container_width=True,
+                use_container_width=False,
                 key=f"main_menu_{menu_name}",
             ):
                 st.session_state.main_menu = menu_name
