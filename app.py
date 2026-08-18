@@ -1198,6 +1198,82 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> str:
     return current_selection
 
 
+def render_classification_items_table(item_df: pd.DataFrame) -> None:
+    if item_df.empty:
+        st.info("표시할 품목이 없습니다.")
+        return
+
+    rows = []
+    for _, row in item_df.iterrows():
+        rows.append(
+            "<tr>"
+            f'<td class="item-code">{escape(str(row["품목코드"]))}</td>'
+            f'<td class="item-name">{escape(str(row["품목명"]))}</td>'
+            f'<td class="item-grade">{escape(str(row["등급"]))}</td>'
+            f'<td class="item-definition">{escape(str(row["정의"]))}</td>'
+            "</tr>"
+        )
+
+    table_html = f"""
+    <div class="classification-items-wrap">
+      <table class="classification-items-table">
+        <thead>
+          <tr>
+            <th class="item-code">품목코드</th>
+            <th class="item-name">품목명</th>
+            <th class="item-grade">등급</th>
+            <th class="item-definition">정의</th>
+          </tr>
+        </thead>
+        <tbody>{''.join(rows)}</tbody>
+      </table>
+    </div>
+    <style>
+      .classification-items-wrap {{
+        max-height: 560px;
+        overflow: auto;
+        border: 1px solid #d0d5dd;
+        border-radius: 0.5rem;
+        background: #fff;
+      }}
+      .classification-items-table {{
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        color: #1f2937;
+      }}
+      .classification-items-table th,
+      .classification-items-table td {{
+        padding: 0.65rem 0.7rem;
+        border-right: 1px solid #d0d5dd;
+        border-bottom: 1px solid #d0d5dd;
+        text-align: left;
+        vertical-align: top;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: keep-all;
+        line-height: 1.55;
+      }}
+      .classification-items-table th {{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f5f7fa;
+        font-weight: 700;
+        text-align: center;
+      }}
+      .classification-items-table .item-code {{ width: 14%; }}
+      .classification-items-table .item-name {{ width: 22%; }}
+      .classification-items-table .item-grade {{ width: 7%; text-align: center; }}
+      .classification-items-table .item-definition {{ width: 57%; }}
+      .classification-items-table th:last-child,
+      .classification-items-table td:last-child {{ border-right: 0; }}
+      .classification-items-table tr:last-child td {{ border-bottom: 0; }}
+    </style>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+
+
 def render_selected_gmp_middle_class(middle_code: str) -> None:
     classification_df = load_medical_device_classification()
     selected_df = classification_df[
@@ -1216,18 +1292,7 @@ def render_selected_gmp_middle_class(middle_code: str) -> None:
 
     item_view = selected_df[["품목코드", "품목명", "등급", "정의"]].reset_index(drop=True)
     st.caption(f"총 {len(item_view):,}개 품목")
-    st.dataframe(
-        item_view,
-        width="stretch",
-        hide_index=True,
-        height=min(520, 38 + len(item_view) * 35),
-        column_config={
-            "품목코드": st.column_config.TextColumn("품목코드", width="medium"),
-            "품목명": st.column_config.TextColumn("품목명", width="large"),
-            "등급": st.column_config.TextColumn("등급", width="small"),
-            "정의": st.column_config.TextColumn("정의", width="large"),
-        },
-    )
+    render_classification_items_table(item_view)
     st.divider()
 
 def render_gmp_product_groups() -> None:
@@ -1385,18 +1450,7 @@ def render_middle_class_items() -> None:
             item_df = item_df[item_match].reset_index(drop=True)
 
         st.caption(f"품목 {len(item_df):,}개")
-        st.dataframe(
-            item_df,
-            width="stretch",
-            hide_index=True,
-            height=560,
-            column_config={
-                "품목코드": st.column_config.TextColumn("품목코드", width="medium"),
-                "품목명": st.column_config.TextColumn("품목명", width="large"),
-                "등급": st.column_config.TextColumn("등급", width="small"),
-                "정의": st.column_config.TextColumn("정의", width="large"),
-            },
-        )
+        render_classification_items_table(item_df)
 
 def render_mfds_results(tab: str) -> None:
     rows = st.session_state.get("mfds_raw_rows", [])
