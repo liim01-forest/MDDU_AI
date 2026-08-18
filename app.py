@@ -1061,6 +1061,11 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> str:
         return ""
 
     table_df = df[["번호", "GMP 품목군", "구분"]].reset_index(drop=True)
+    repeated_group = table_df.duplicated(
+        subset=["번호", "GMP 품목군"], keep="first"
+    )
+    table_df.loc[repeated_group, "번호"] = pd.NA
+    table_df.loc[repeated_group, "GMP 품목군"] = ""
     table_event = st.dataframe(
         table_df,
         width="stretch",
@@ -1070,7 +1075,7 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> str:
         selection_mode="single-row",
         key="gmp_grouped_table_interactive",
         column_config={
-            "번호": st.column_config.NumberColumn("번호", width="small"),
+            "번호": st.column_config.NumberColumn("번호", width="small", format="%d"),
             "GMP 품목군": st.column_config.TextColumn(
                 "품목군 (Product Group)", width="medium"
             ),
