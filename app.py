@@ -1007,6 +1007,16 @@ def load_gmp_product_groups() -> pd.DataFrame:
     return pd.read_csv(csv_path, encoding="utf-8-sig")
 
 
+@st.cache_data
+def load_medical_device_classification() -> pd.DataFrame:
+    csv_path = Path(__file__).with_name("medical_device_classification.csv")
+    return pd.read_csv(
+        csv_path,
+        encoding="utf-8-sig",
+        dtype={"중분류코드": str, "품목코드": str, "등급": str},
+    )
+
+
 def render_gmp_grouped_table(df: pd.DataFrame) -> None:
     if df.empty:
         st.info("검색 조건에 해당하는 품목이 없습니다.")
@@ -1131,6 +1141,100 @@ def render_gmp_product_groups() -> None:
 
     st.caption(f"총 {len(view_df):,}개 항목")
     render_gmp_grouped_table(view_df)
+
+
+def render_middle_class_items() -> None:
+    st.subheader("중분류별 품목")
+    st.caption(
+        "「의료기기 품목 및 품목별 등급에 관한 규정」의 중분류를 선택하면 "
+        "해당 품목명과 등급을 확인할 수 있습니다."
+    )
+
+    classification_df = load_medical_device_classification()
+    middle_classes = (
+        classification_df.groupby(["중분류코드", "중분류명"], as_index=False)
+        .size()
+        .rename(columns={"size": "품목수"})
+        .sort_values("중분류코드")
+        .reset_index(drop=True)
+    )
+
+    middle_col, item_col = st.columns([1, 2], gap="large")
+
+    with middle_col:
+        middle_search = st.text_input(
+            "중분류 검색",
+            placeholder="예: A02000 또는 의료용 침대",
+            key="middle_class_search",
+        ).strip()
+        visible_middle_classes = middle_classes
+        if middle_search:
+            middle_match = visible_middle_classes.astype(str).apply(
+                lambda column: column.str.contains(
+                    middle_search, case=False, na=False, regex=False
+                )
+            ).any(axis=1)
+            visible_middle_classes = visible_middle_classes[middle_match].reset_index(drop=True)
+
+        if visible_middle_classes.empty:
+            st.info("검색 조건에 해당하는 중분류가 없습니다.")
+            return
+
+        st.caption(f"중분류 {len(visible_middle_classes):,}개 · 행을 클릭해 선택하세요.")
+        middle_event = st.dataframe(
+            visible_middle_classes,
+            use_container_width=True,
+            hide_index=True,
+            height=560,
+            on_select="rerun",
+            selection_mode="single-row",
+            key="middle_class_table",
+            column_config={
+                "중분류코드": st.column_config.TextColumn("코드", width="small"),
+                "중분류명": st.column_config.TextColumn("중분류명", width="large"),
+                "품목수": st.column_config.NumberColumn("품목수", width="small"),
+            },
+        )
+
+    selected_rows = middle_event.selection.rows
+    if selected_rows:
+        selected_middle = visible_middle_classes.iloc[selected_rows[0]]
+    else:
+        selected_middle = visible_middle_classes.iloc[0]
+
+    selected_code = str(selected_middle["중분류코드"])
+    selected_name = str(selected_middle["중분류명"])
+    item_df = classification_df[
+        classification_df["중분류코드"] == selected_code
+    ][["품목코드", "품목명", "등급"]].reset_index(drop=True)
+
+    with item_col:
+        st.markdown(f"#### `{selected_code}` {selected_name}")
+        item_search = st.text_input(
+            "품목 검색",
+            placeholder="품목코드 또는 품목명을 입력하세요.",
+            key="middle_class_item_search",
+        ).strip()
+        if item_search:
+            item_match = item_df.astype(str).apply(
+                lambda column: column.str.contains(
+                    item_search, case=False, na=False, regex=False
+                )
+            ).any(axis=1)
+            item_df = item_df[item_match].reset_index(drop=True)
+
+        st.caption(f"품목 {len(item_df):,}개")
+        st.dataframe(
+            item_df,
+            use_container_width=True,
+            hide_index=True,
+            height=560,
+            column_config={
+                "품목코드": st.column_config.TextColumn("품목코드", width="medium"),
+                "품목명": st.column_config.TextColumn("품목명", width="large"),
+                "등급": st.column_config.TextColumn("등급", width="small"),
+            },
+        )
 
 def render_mfds_results(tab: str) -> None:
     rows = st.session_state.get("mfds_raw_rows", [])
@@ -2090,8 +2194,7 @@ def main() -> None:
                 render_gmp_product_groups()
 
             with middle_class_tab:
-                st.subheader("중분류별 품목")
-                st.info("중분류별 품목 기능이 표시될 영역입니다.")
+                render_middle_class_items()
 
     elif active_page == "미국":
         render_fda_tab(filters.keyword, filters.approval_no)
