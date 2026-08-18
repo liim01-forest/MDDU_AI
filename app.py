@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import contextlib
 import importlib.util
+import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from io import BytesIO
@@ -1078,9 +1079,20 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> None:
                     f'<td class="gmp-number" rowspan="{rowspan}">{int(number)}</td>'
                     f'<td class="gmp-group" rowspan="{rowspan}">{group_html}</td>'
                 )
+            classification_text = str(row["구분"])
+            middle_code_match = re.match(r"^([A-Z]\d{5})\b", classification_text)
+            if middle_code_match:
+                middle_code = middle_code_match.group(1)
+                classification_html = (
+                    f'<a class="gmp-classification-link" '
+                    f'href="?gmp_middle={escape(middle_code)}" target="_self">'
+                    f'{escape(classification_text)}</a>'
+                )
+            else:
+                classification_html = escape(classification_text)
             body_rows.append(
                 f'<tr>{merged_cells}<td class="gmp-classification">'
-                f'{escape(str(row["구분"]))}</td></tr>'
+                f'{classification_html}</td></tr>'
             )
 
     table_html = f"""
@@ -1131,6 +1143,16 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> None:
         vertical-align: middle;
       }}
       .gmp-grouped-table .gmp-classification {{ width: 65%; }}
+      .gmp-classification-link {{
+        display: block;
+        color: #0969da !important;
+        font-weight: 600;
+        text-decoration: none !important;
+      }}
+      .gmp-classification-link:hover {{
+        color: #054da7 !important;
+        text-decoration: underline !important;
+      }}
       .gmp-grouped-table td.gmp-number {{ vertical-align: middle; }}
       .gmp-grouped-table tr:last-child td {{ border-bottom: 0; }}
       .gmp-grouped-table th:last-child,
@@ -1138,6 +1160,46 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> None:
     </style>
     """
     st.markdown(table_html, unsafe_allow_html=True)
+
+
+def render_selected_gmp_middle_class(middle_code: str) -> None:
+    classification_df = load_medical_device_classification()
+    selected_df = classification_df[
+        classification_df["중분류코드"] == middle_code
+    ]
+    if selected_df.empty:
+        selected_df = classification_df[
+            classification_df["품목코드"].str.startswith(f"{middle_code}.", na=False)
+        ]
+    if selected_df.empty:
+        st.warning(f"{middle_code}에 해당하는 품목 정보를 찾을 수 없습니다.")
+        return
+
+    middle_name = str(selected_df.iloc[0]["중분류명"])
+    title_col, clear_col = st.columns([5, 1])
+    with title_col:
+        st.markdown(f"#### `{middle_code}` {middle_name} 품목 목록")
+    with clear_col:
+        if st.button("선택 해제", key="clear_gmp_middle", width="stretch"):
+            if "gmp_middle" in st.query_params:
+                del st.query_params["gmp_middle"]
+            st.rerun()
+
+    item_view = selected_df[["품목코드", "품목명", "등급", "정의"]].reset_index(drop=True)
+    st.caption(f"총 {len(item_view):,}개 품목")
+    st.dataframe(
+        item_view,
+        width="stretch",
+        hide_index=True,
+        height=min(520, 38 + len(item_view) * 35),
+        column_config={
+            "품목코드": st.column_config.TextColumn("품목코드", width="medium"),
+            "품목명": st.column_config.TextColumn("품목명", width="large"),
+            "등급": st.column_config.TextColumn("등급", width="small"),
+            "정의": st.column_config.TextColumn("정의", width="large"),
+        },
+    )
+    st.divider()
 
 def render_gmp_product_groups() -> None:
     st.subheader("GMP 품목군")
@@ -1177,6 +1239,11 @@ def render_gmp_product_groups() -> None:
         view_df = view_df[match]
 
     st.caption(f"총 {len(view_df):,}개 항목")
+    selected_middle = st.query_params.get("gmp_middle", "")
+    if isinstance(selected_middle, list):
+        selected_middle = selected_middle[0] if selected_middle else ""
+    if re.fullmatch(r"[A-Z]\d{5}", str(selected_middle)):
+        render_selected_gmp_middle_class(str(selected_middle))
     render_gmp_grouped_table(view_df)
 
 
