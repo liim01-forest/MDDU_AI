@@ -1055,41 +1055,91 @@ def load_medical_device_classification() -> pd.DataFrame:
     return classification_df
 
 
-def render_gmp_grouped_table(df: pd.DataFrame) -> str:
+def render_gmp_grouped_table(df: pd.DataFrame) -> None:
     if df.empty:
         st.info("검색 조건에 해당하는 품목이 없습니다.")
-        return ""
+        return
 
-    table_df = df[["번호", "GMP 품목군", "구분"]].reset_index(drop=True)
-    repeated_group = table_df.duplicated(
-        subset=["번호", "GMP 품목군"], keep="first"
-    )
-    table_df.loc[repeated_group, "번호"] = pd.NA
-    table_df.loc[repeated_group, "GMP 품목군"] = ""
-    table_event = st.dataframe(
-        table_df,
-        width="stretch",
-        hide_index=True,
-        height=650,
-        on_select="rerun",
-        selection_mode="single-row",
-        key="gmp_grouped_table_interactive",
-        column_config={
-            "번호": st.column_config.NumberColumn("번호", width="small", format="%d"),
-            "GMP 품목군": st.column_config.TextColumn(
-                "품목군 (Product Group)", width="medium"
-            ),
-            "구분": st.column_config.TextColumn(
-                "구분 · 행을 클릭해 품목 보기", width="large"
-            ),
-        },
-    )
-    selected_rows = table_event.selection.rows
-    if not selected_rows:
-        return ""
-    classification_text = str(table_df.iloc[selected_rows[0]]["구분"])
-    middle_code_match = re.search(r"[A-Z]\d{5}", classification_text)
-    return middle_code_match.group(0) if middle_code_match else ""
+    body_rows: list[str] = []
+    for (number, group_name), group_df in df.groupby(
+        ["번호", "GMP 품목군"], sort=False, dropna=False
+    ):
+        rowspan = len(group_df)
+        group_text = str(group_name)
+        if " (" in group_text:
+            korean_name, english_name = group_text.split(" (", 1)
+            group_html = f"{escape(korean_name)}<br><span>({escape(english_name)}</span>"
+        else:
+            group_html = escape(group_text)
+
+        for row_index, (_, row) in enumerate(group_df.iterrows()):
+            merged_cells = ""
+            if row_index == 0:
+                merged_cells = (
+                    f'<td class="gmp-number" rowspan="{rowspan}">{int(number)}</td>'
+                    f'<td class="gmp-group" rowspan="{rowspan}">{group_html}</td>'
+                )
+            body_rows.append(
+                f'<tr>{merged_cells}<td class="gmp-classification">'
+                f'{escape(str(row["구분"]))}</td></tr>'
+            )
+
+    table_html = f"""
+    <div class="gmp-table-wrap">
+      <table class="gmp-grouped-table">
+        <thead>
+          <tr>
+            <th class="gmp-number">번호</th>
+            <th class="gmp-group">품목군<br><span>(Product Group)</span></th>
+            <th class="gmp-classification">구분</th>
+          </tr>
+        </thead>
+        <tbody>{''.join(body_rows)}</tbody>
+      </table>
+    </div>
+    <style>
+      .gmp-table-wrap {{
+        max-height: 650px;
+        overflow: auto;
+        border: 1px solid #c7cbd1;
+        border-radius: 0.5rem;
+      }}
+      .gmp-grouped-table {{
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        color: #1f2937;
+        background: #fff;
+      }}
+      .gmp-grouped-table th,
+      .gmp-grouped-table td {{
+        border-right: 1px solid #c7cbd1;
+        border-bottom: 1px solid #c7cbd1;
+        padding: 0.55rem 0.65rem;
+        line-height: 1.4;
+      }}
+      .gmp-grouped-table th {{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f5f7fa;
+        text-align: center;
+        font-weight: 600;
+      }}
+      .gmp-grouped-table .gmp-number {{ width: 7%; text-align: center; }}
+      .gmp-grouped-table .gmp-group {{
+        width: 30%;
+        text-align: center;
+        vertical-align: middle;
+      }}
+      .gmp-grouped-table .gmp-classification {{ width: 63%; }}
+      .gmp-grouped-table td.gmp-number {{ vertical-align: middle; }}
+      .gmp-grouped-table tr:last-child td {{ border-bottom: 0; }}
+      .gmp-grouped-table th:last-child,
+      .gmp-grouped-table td:last-child {{ border-right: 0; }}
+    </style>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
 def render_selected_gmp_middle_class(middle_code: str) -> None:
@@ -1161,12 +1211,24 @@ def render_gmp_product_groups() -> None:
         ).any(axis=1)
         view_df = view_df[match]
 
+    classification_options = [
+        text
+        for text in dict.fromkeys(view_df["구분"].astype(str))
+        if re.search(r"[A-Z]\d{5}", text)
+    ]
+    selected_classification = st.selectbox(
+        "중분류 품목 보기",
+        ["", *classification_options],
+        format_func=lambda value: "중분류를 선택하세요." if value == "" else value,
+        key="gmp_middle_selector",
+    )
+    if selected_classification:
+        selected_middle_match = re.search(r"[A-Z]\d{5}", selected_classification)
+        if selected_middle_match:
+            render_selected_gmp_middle_class(selected_middle_match.group(0))
+
     st.caption(f"총 {len(view_df):,}개 항목")
-    selected_items_placeholder = st.empty()
-    selected_middle = render_gmp_grouped_table(view_df)
-    if selected_middle:
-        with selected_items_placeholder.container():
-            render_selected_gmp_middle_class(selected_middle)
+    render_gmp_grouped_table(view_df)
 
 
 def render_middle_class_items() -> None:
