@@ -16,6 +16,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import pandas as pd
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 
 from emedi_downloader import (
     COMPANY_COLUMNS,
@@ -33,6 +34,10 @@ from emedi_downloader import (
 
 
 APP_TITLE = "의료기기 인허가 정보 수집기"
+GMP_TABLE_COMPONENT = components.declare_component(
+    "gmp_grouped_table",
+    path=str(Path(__file__).with_name("gmp_table_component")),
+)
 
 FDA_510K_URL = "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPMN/pmn.cfm"
 FDA_PMA_URL = "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPMA/pma.cfm"
@@ -1055,7 +1060,7 @@ def load_medical_device_classification() -> pd.DataFrame:
     return classification_df
 
 
-def render_gmp_grouped_table(df: pd.DataFrame) -> None:
+def render_gmp_grouped_table_legacy(df: pd.DataFrame) -> None:
     if df.empty:
         st.info("검색 조건에 해당하는 품목이 없습니다.")
         return
@@ -1142,6 +1147,57 @@ def render_gmp_grouped_table(df: pd.DataFrame) -> None:
     st.markdown(table_html, unsafe_allow_html=True)
 
 
+def render_gmp_grouped_table(df: pd.DataFrame) -> str:
+    if df.empty:
+        st.info("검색 조건에 해당하는 품목이 없습니다.")
+        return ""
+
+    groups = []
+    for (number, group_name), group_df in df.groupby(
+        ["번호", "GMP 품목군"], sort=False, dropna=False
+    ):
+        rows = []
+        for classification_text in group_df["구분"].astype(str):
+            middle_code_match = re.search(r"[A-Z]\d{5}", classification_text)
+            rows.append(
+                {
+                    "code": middle_code_match.group(0) if middle_code_match else "",
+                    "label": classification_text,
+                }
+            )
+        groups.append(
+            {
+                "number": int(number),
+                "name": str(group_name),
+                "rows": rows,
+            }
+        )
+
+    available_codes = {
+        row["code"]
+        for group in groups
+        for row in group["rows"]
+        if row["code"]
+    }
+    selected_state_key = "gmp_selected_middle"
+    current_selection = str(st.session_state.get(selected_state_key, ""))
+    if current_selection not in available_codes:
+        current_selection = ""
+        st.session_state[selected_state_key] = ""
+
+    selected_middle = GMP_TABLE_COMPONENT(
+        groups=groups,
+        selected=current_selection,
+        default="",
+        key="gmp_grouped_table_component",
+    )
+    selected_middle = str(selected_middle or "")
+    if selected_middle in available_codes and selected_middle != current_selection:
+        st.session_state[selected_state_key] = selected_middle
+        st.rerun()
+    return current_selection
+
+
 def render_selected_gmp_middle_class(middle_code: str) -> None:
     classification_df = load_medical_device_classification()
     selected_df = classification_df[
@@ -1211,24 +1267,12 @@ def render_gmp_product_groups() -> None:
         ).any(axis=1)
         view_df = view_df[match]
 
-    classification_options = [
-        text
-        for text in dict.fromkeys(view_df["구분"].astype(str))
-        if re.search(r"[A-Z]\d{5}", text)
-    ]
-    selected_classification = st.selectbox(
-        "중분류 품목 보기",
-        ["", *classification_options],
-        format_func=lambda value: "중분류를 선택하세요." if value == "" else value,
-        key="gmp_middle_selector",
-    )
-    if selected_classification:
-        selected_middle_match = re.search(r"[A-Z]\d{5}", selected_classification)
-        if selected_middle_match:
-            render_selected_gmp_middle_class(selected_middle_match.group(0))
-
     st.caption(f"총 {len(view_df):,}개 항목")
-    render_gmp_grouped_table(view_df)
+    selected_items_placeholder = st.empty()
+    selected_middle = render_gmp_grouped_table(view_df)
+    if selected_middle:
+        with selected_items_placeholder.container():
+            render_selected_gmp_middle_class(selected_middle)
 
 
 def render_middle_class_items() -> None:
