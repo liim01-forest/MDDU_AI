@@ -1010,7 +1010,7 @@ def load_gmp_product_groups() -> pd.DataFrame:
 @st.cache_data
 def load_medical_device_classification() -> pd.DataFrame:
     csv_path = Path(__file__).with_name("medical_device_classification.csv")
-    return pd.read_csv(
+    classification_df = pd.read_csv(
         csv_path,
         encoding="utf-8-sig",
         dtype={
@@ -1020,6 +1020,38 @@ def load_medical_device_classification() -> pd.DataFrame:
             "등급": str,
         },
     )
+    required_columns = {"중분류코드", "중분류명", "품목코드", "품목명", "등급"}
+    missing_required = required_columns.difference(classification_df.columns)
+    if missing_required:
+        missing_text = ", ".join(sorted(missing_required))
+        raise ValueError(
+            "medical_device_classification.csv에 필수 열이 없습니다: "
+            f"{missing_text}"
+        )
+
+    large_class_names = {
+        "A": "기구·기계",
+        "B": "의료용품",
+        "C": "치과 재료",
+        "D": "삭제",
+        "E": "소프트웨어",
+    }
+    if "대분류코드" not in classification_df.columns:
+        classification_df.insert(
+            0,
+            "대분류코드",
+            classification_df["중분류코드"].str[:1],
+        )
+    if "대분류명" not in classification_df.columns:
+        classification_df.insert(
+            1,
+            "대분류명",
+            classification_df["대분류코드"].map(large_class_names).fillna("기타"),
+        )
+    if "정의" not in classification_df.columns:
+        classification_df["정의"] = "정의 정보 없음"
+
+    return classification_df
 
 
 def render_gmp_grouped_table(df: pd.DataFrame) -> None:
@@ -1156,6 +1188,11 @@ def render_middle_class_items() -> None:
     )
 
     classification_df = load_medical_device_classification()
+    if classification_df["정의"].eq("정의 정보 없음").all():
+        st.warning(
+            "현재 배포된 분류 CSV는 이전 버전입니다. 화면은 사용할 수 있지만 품목 정의를 "
+            "표시하려면 최신 medical_device_classification.csv로 교체해 주세요."
+        )
     large_classes = (
         classification_df.groupby(["대분류코드", "대분류명"], as_index=False)
         .agg(중분류수=("중분류코드", "nunique"), 품목수=("품목코드", "size"))
