@@ -1013,7 +1013,12 @@ def load_medical_device_classification() -> pd.DataFrame:
     return pd.read_csv(
         csv_path,
         encoding="utf-8-sig",
-        dtype={"중분류코드": str, "품목코드": str, "등급": str},
+        dtype={
+            "대분류코드": str,
+            "중분류코드": str,
+            "품목코드": str,
+            "등급": str,
+        },
     )
 
 
@@ -1144,15 +1149,39 @@ def render_gmp_product_groups() -> None:
 
 
 def render_middle_class_items() -> None:
-    st.subheader("중분류별 품목")
+    st.subheader("대분류·중분류별 품목")
     st.caption(
-        "「의료기기 품목 및 품목별 등급에 관한 규정」의 중분류를 선택하면 "
-        "해당 품목명과 등급을 확인할 수 있습니다."
+        "「의료기기 품목 및 품목별 등급에 관한 규정」의 대분류와 중분류를 "
+        "차례로 선택하면 해당 품목명, 등급 및 정의를 확인할 수 있습니다."
     )
 
     classification_df = load_medical_device_classification()
+    large_classes = (
+        classification_df.groupby(["대분류코드", "대분류명"], as_index=False)
+        .agg(중분류수=("중분류코드", "nunique"), 품목수=("품목코드", "size"))
+        .sort_values("대분류코드")
+        .reset_index(drop=True)
+    )
+    large_class_labels = {
+        str(row["대분류코드"]): (
+            f'{row["대분류코드"]}. {row["대분류명"]} '
+            f'({int(row["중분류수"])}개 중분류 · {int(row["품목수"]):,}개 품목)'
+        )
+        for _, row in large_classes.iterrows()
+    }
+    selected_large_code = st.radio(
+        "대분류",
+        list(large_class_labels),
+        format_func=lambda code: large_class_labels[code],
+        horizontal=True,
+        key="medical_device_large_class",
+    )
+
+    large_class_df = classification_df[
+        classification_df["대분류코드"] == selected_large_code
+    ]
     middle_classes = (
-        classification_df.groupby(["중분류코드", "중분류명"], as_index=False)
+        large_class_df.groupby(["중분류코드", "중분류명"], as_index=False)
         .size()
         .rename(columns={"size": "품목수"})
         .sort_values("중분류코드")
@@ -1165,7 +1194,7 @@ def render_middle_class_items() -> None:
         middle_search = st.text_input(
             "중분류 검색",
             placeholder="예: A02000 또는 의료용 침대",
-            key="middle_class_search",
+            key=f"middle_class_search_{selected_large_code}",
         ).strip()
         visible_middle_classes = middle_classes
         if middle_search:
@@ -1183,12 +1212,12 @@ def render_middle_class_items() -> None:
         st.caption(f"중분류 {len(visible_middle_classes):,}개 · 행을 클릭해 선택하세요.")
         middle_event = st.dataframe(
             visible_middle_classes,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=560,
             on_select="rerun",
             selection_mode="single-row",
-            key="middle_class_table",
+            key=f"middle_class_table_{selected_large_code}",
             column_config={
                 "중분류코드": st.column_config.TextColumn("코드", width="small"),
                 "중분류명": st.column_config.TextColumn("중분류명", width="large"),
@@ -1204,16 +1233,16 @@ def render_middle_class_items() -> None:
 
     selected_code = str(selected_middle["중분류코드"])
     selected_name = str(selected_middle["중분류명"])
-    item_df = classification_df[
-        classification_df["중분류코드"] == selected_code
-    ][["품목코드", "품목명", "등급"]].reset_index(drop=True)
+    item_df = large_class_df[
+        large_class_df["중분류코드"] == selected_code
+    ][["품목코드", "품목명", "등급", "정의"]].reset_index(drop=True)
 
     with item_col:
         st.markdown(f"#### `{selected_code}` {selected_name}")
         item_search = st.text_input(
             "품목 검색",
             placeholder="품목코드 또는 품목명을 입력하세요.",
-            key="middle_class_item_search",
+            key=f"middle_class_item_search_{selected_code}",
         ).strip()
         if item_search:
             item_match = item_df.astype(str).apply(
@@ -1226,13 +1255,14 @@ def render_middle_class_items() -> None:
         st.caption(f"품목 {len(item_df):,}개")
         st.dataframe(
             item_df,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=560,
             column_config={
                 "품목코드": st.column_config.TextColumn("품목코드", width="medium"),
                 "품목명": st.column_config.TextColumn("품목명", width="large"),
                 "등급": st.column_config.TextColumn("등급", width="small"),
+                "정의": st.column_config.TextColumn("정의", width="large"),
             },
         )
 
@@ -2188,7 +2218,7 @@ def main() -> None:
             render_mfds_tab(filters.request_delay, filters.max_pages)
 
         with mfds_classification_tab:
-            gmp_group_tab, middle_class_tab = st.tabs(["GMP 품목군", "중분류별 품목"])
+            gmp_group_tab, middle_class_tab = st.tabs(["GMP 품목군", "대·중분류별 품목"])
 
             with gmp_group_tab:
                 render_gmp_product_groups()
