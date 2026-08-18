@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; font-family: Arial, "Noto Sans KR", sans-serif; }
+      .table-wrap {
+        height: 650px;
+        overflow: auto;
+        border: 1px solid #c7cbd1;
+        border-radius: 8px;
+        background: #fff;
+      }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; color: #1f2937; }
+      th, td {
+        border-right: 1px solid #c7cbd1;
+        border-bottom: 1px solid #c7cbd1;
+        padding: 10px 12px;
+        line-height: 1.45;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f5f7fa;
+        text-align: center;
+        font-weight: 700;
+      }
+      th:last-child, td:last-child { border-right: 0; }
+      .number { width: 7%; text-align: center; vertical-align: middle; }
+      .group { width: 30%; text-align: center; vertical-align: middle; }
+      .classification { width: 63%; padding: 0; }
+      .classification button {
+        width: 100%;
+        border: 0;
+        padding: 11px 14px;
+        background: transparent;
+        color: #1f2937;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .classification button:hover { background: #eef6ff; color: #075eae; }
+      .classification button.selected {
+        background: #dceeff;
+        color: #064f91;
+        font-weight: 700;
+      }
+      .hint { margin: 0 0 8px; color: #667085; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <p class="hint">구분을 클릭하면 해당 품목 목록이 같은 페이지에 표시됩니다.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th class="number">번호</th><th class="group">품목군<br>(Product Group)</th><th>구분</th></tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <script>
+      const send = (type, payload = {}) => {
+        window.parent.postMessage({ isStreamlitMessage: true, type, ...payload }, "*");
+      };
+
+      const setValue = (value) => send("streamlit:setComponentValue", { value });
+      const setHeight = () => send("streamlit:setFrameHeight", { height: 682 });
+
+      function render(args) {
+        const body = document.getElementById("table-body");
+        body.replaceChildren();
+        const selected = args.selected || "";
+
+        for (const group of args.groups || []) {
+          group.rows.forEach((row, index) => {
+            const tr = document.createElement("tr");
+            if (index === 0) {
+              const number = document.createElement("td");
+              number.className = "number";
+              number.rowSpan = group.rows.length;
+              number.textContent = group.number;
+              tr.appendChild(number);
+
+              const groupCell = document.createElement("td");
+              groupCell.className = "group";
+              groupCell.rowSpan = group.rows.length;
+              groupCell.textContent = group.name;
+              tr.appendChild(groupCell);
+            }
+
+            const classification = document.createElement("td");
+            classification.className = "classification";
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = row.label;
+            button.dataset.code = row.code;
+            if (row.code === selected) button.classList.add("selected");
+            button.addEventListener("click", () => {
+              document.querySelectorAll(".classification button").forEach((item) => {
+                item.classList.toggle("selected", item === button);
+              });
+              setValue(row.code);
+            });
+            classification.appendChild(button);
+            tr.appendChild(classification);
+            body.appendChild(tr);
+          });
+        }
+        setHeight();
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "streamlit:render") render(event.data.args || {});
+      });
+      send("streamlit:componentReady", { apiVersion: 1 });
+      setHeight();
+    </script>
+  </body>
+</html>
